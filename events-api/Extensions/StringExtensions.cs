@@ -1,5 +1,4 @@
-﻿using Npgsql;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -52,7 +51,7 @@ namespace events_api.Extensions
             return (sb.ToString().Normalize(NormalizationForm.FormC));
         }
 
-        public static string BuildPostgresConnectionString(this string url)
+        /*public static string BuildPostgresConnectionString(this string url)
         {
             var databaseUri = new Uri(url);
             var userInfo = databaseUri.UserInfo.Split(':');
@@ -67,7 +66,7 @@ namespace events_api.Extensions
             };
 
             return builder.ToString();
-        }
+        }*/
 
     }
 }

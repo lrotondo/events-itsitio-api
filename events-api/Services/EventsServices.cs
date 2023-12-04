@@ -218,7 +218,7 @@ namespace events_api.Services
                 dto.FullName,
                 configuration.GetValue<string>("Sendgrid:Templates:PostRegister"),
                 emailData);
-
+            
             return Ok();
         }
 

@@ -43,12 +43,20 @@ builder.Services.AddQuartz(q =>
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 string connectionString = Environment.GetEnvironmentVariable("EVENTS_DB_CONNECTION");
-builder.Services.AddEntityFrameworkNpgsql()
+
+if (connectionString == null) throw new Exception("EVENTS_DB_CONNECTION environment variable not set");
+
+builder.Services.AddDbContextPool<ApplicationDbContext>(options => {
+
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
+
+/*builder.Services.AddEntityFrameworkNpgsql()
     .AddDbContext<ApplicationDbContext>(options =>
     {
         options.UseNpgsql(connectionString.BuildPostgresConnectionString());
     });
-
+*/
 
 string jwtKey = Environment.GetEnvironmentVariable("EVENTS_JWT_KEY");
 builder.Services.AddAuthentication()
