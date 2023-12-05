@@ -7,8 +7,8 @@ namespace events_api.Services
     public class EmailServices : IEmailServices
     {
         private readonly IConfiguration configuration;
-        //public static readonly bool isTest = AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLowerInvariant().Contains("mvc.testing"));
-        public static readonly bool isTest = true;
+        public static readonly bool isTest = AppDomain.CurrentDomain.GetAssemblies().Any(a => a.FullName.ToLowerInvariant().Contains("mvc.testing"));
+        //public static readonly bool isTest = true;
         public static readonly string apiKey = Environment.GetEnvironmentVariable("EVENTS_SENDGRID_API_KEY");
 
         public EmailServices(IConfiguration configuration)
