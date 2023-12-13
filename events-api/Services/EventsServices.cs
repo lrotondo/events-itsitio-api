@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using events_api.Extensions;
 using ClosedXML.Excel;
 using System.Globalization;
+using MailUp.Sdk.Base;
+using EllipticCurve.Utils;
 
 namespace events_api.Services
 {
@@ -200,25 +202,27 @@ namespace events_api.Services
             await context.AddAsync(user);
             eventEntity.Users.Add(user);
             await context.SaveChangesAsync();
-
-            var emailData = new Dictionary<string, string>()
-            {
-                ["event_name"] = eventEntity.Title,
-                ["schedule_url"] = $"https://calendar.google.com/calendar/render?action=TEMPLATE&dates={eventEntity.DateUTC.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture)}%2F{eventEntity.DateUTC.AddHours(2).ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture)}&details={eventEntity.Description}&location=Online&text={eventEntity.Title}",
-                ["schedule_outlook_url"] = $"https://outlook.live.com/calendar/0/deeplink/compose?allday=false&body={eventEntity.Description}&enddt={eventEntity.DateUTC.AddHours(2).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}&location=&path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&startdt={eventEntity.DateUTC.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}&subject={eventEntity.Title}",
-                ["stream_url"] = $"{configuration.GetValue<string>("ClientUrl")}/events/{eventEntity.Slug}",
-                ["day"] = eventEntity.DateUTC.Day.ToString(),
-                ["month"] = (new CultureInfo("es-ES", false)).DateTimeFormat.GetMonthName(eventEntity.DateUTC.Month),
-                ["time_arg"] = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time")).ToString("HH:mm"),
-                ["time_mex"] = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm"),
-                ["time_col"] = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm")
-            };
-            await emailServices.SendDynamicTemplateEmail_OneRecipient(
-                dto.Email,
-                dto.FullName,
-                configuration.GetValue<string>("Sendgrid:Templates:PostRegister"),
-                emailData);
-            
+            var mDTO = new TemplateDTO();            
+            mDTO.TemplateId = int.Parse(configuration.GetValue<string>("MailUp:Templates:PostRegister"));
+            mDTO.From = new EmailAddressDTO { Email = configuration.GetValue<string>("MailUp:SenderEmail"), Name = configuration.GetValue<string>("MailUp:SenderName") };
+            mDTO.To = new List<EmailAddressDTO> { new EmailAddressDTO { Email = dto.Email, Name = dto.FullName } };
+            mDTO.CharSet = "utf-8";
+            List<NameValueDTO> vars = new List<NameValueDTO>();
+            vars.Add(new NameValueDTO { N = "event_name", V = eventEntity.Title });
+            vars.Add(new NameValueDTO { N = "schedule_url", V = $"<a href='https://calendar.google.com/calendar/render?action=TEMPLATE&dates={eventEntity.DateUTC.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture)}%2F{eventEntity.DateUTC.AddHours(2).ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture)}&details={eventEntity.Description}&location=Online&text={eventEntity.Title}' class='es-button' target='_blank' style='mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;display:inline-block;background:#31CB4B;border-radius:30px;font-family:arial, \'helvetica neue\', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #31CB4B'>Agendar en Google Calendar</a>" });
+            vars.Add(new NameValueDTO { N = "schedule_outlook_url", V = $"<a href='https://outlook.live.com/calendar/0/deeplink/compose?allday=false&body={eventEntity.Description}&enddt={eventEntity.DateUTC.AddHours(2).ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}&location=&path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&startdt={eventEntity.DateUTC.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}&subject={eventEntity.Title}' class='es-button' target='_blank' style='mso-style-priority:100 !important; text-decoration:none; -webkit-text-size-adjust:none; -ms-text-size-adjust:none; mso-line-height-rule:exactly; color:#FFFFFF;font-size:18px;display:inline-block;background:#31CB4B;border-radius:30px;font-family:arial, \'helvetica neue\', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #31CB4B'>Agendar en Outlook Calendar</a>" });
+            vars.Add(new NameValueDTO { N = "stream_url", V = $"<a href='{configuration.GetValue<string>("ClientUrl")}/events/{eventEntity.Slug}' class='es-button' target='_blank' style='mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;display:inline-block;background:#31CB4B;border-radius:30px;font-family:arial, \'helvetica neue\', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #31CB4B'>Ver Transmisión</a>" });
+            vars.Add(new NameValueDTO { N = "day", V = eventEntity.DateUTC.Day.ToString() });
+            vars.Add(new NameValueDTO { N = "month", V = (new CultureInfo("es-ES", false)).DateTimeFormat.GetMonthName(eventEntity.DateUTC.Month) });
+            vars.Add(new NameValueDTO { N = "time_arg", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time")).ToString("HH:mm") });
+            vars.Add(new NameValueDTO { N = "time_mex", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
+            vars.Add(new NameValueDTO { N = "time_col", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
+            mDTO.XSmtpAPI = new XSmtpAPIDTO();
+            mDTO.XSmtpAPI.DynamicFields = vars;
+            mDTO.User = new SmtpUserDTO();
+            mDTO.User.Username = configuration.GetValue<string>("MailUp:Username");
+            mDTO.User.Secret = configuration.GetValue<string>("MailUp:Secret");
+            await EmailServices.SendEmailWithVariables(mDTO);            
             return Ok();
         }
 
@@ -228,19 +232,24 @@ namespace events_api.Services
             if (eventEntity == null) return NotFound();
             eventEntity.Live = false;
             await context.SaveChangesAsync();
+            var mDTO = new TemplateDTO();
+            mDTO.To = new List<EmailAddressDTO>();
+            eventEntity.Users.ForEach(user => mDTO.To.Add(new EmailAddressDTO { Email = user.Email, Name = user.FullName }));
 
-            var emails = new List<SendGrid.Helpers.Mail.EmailAddress>();
-            eventEntity.Users.ForEach(user => emails.Add(new SendGrid.Helpers.Mail.EmailAddress(user.Email, user.FullName)));
+            mDTO.TemplateId = int.Parse(configuration.GetValue<string>("MailUp:Templates:PostEvent"));
+            mDTO.From = new EmailAddressDTO { Email = configuration.GetValue<string>("MailUp:SenderEmail"), Name = configuration.GetValue<string>("MailUp:SenderName") };
 
-            var emailData = new Dictionary<string, string>()
-            {
-                ["event_name"] = eventEntity.Title,
-                ["stream_url"] = $"{configuration.GetValue<string>("ClientUrl")}/events/{eventEntity.Slug}",
-            };
-            await emailServices.SendDynamicTemplateEmail_MultipleRecipients(
-                emails,
-                configuration.GetValue<string>("Sendgrid:Templates:PostEvent"),
-                emailData);
+            mDTO.CharSet = "utf-8";
+            List<NameValueDTO> vars = new List<NameValueDTO>();
+            vars.Add(new NameValueDTO { N = "event_name", V = eventEntity.Title });
+            vars.Add(new NameValueDTO { N = "stream_url", V = $"<a href='{configuration.GetValue<string>("ClientUrl")}/events/{eventEntity.Slug}' class='es-button' target='_blank' style='mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;display:inline-block;background:#31CB4B;border-radius:30px;font-family:arial, \'helvetica neue\', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #31CB4B'>Ver Transmisión</a>" });
+            mDTO.XSmtpAPI = new XSmtpAPIDTO();
+            mDTO.XSmtpAPI = new XSmtpAPIDTO();
+            mDTO.XSmtpAPI.DynamicFields = vars;
+            mDTO.User = new SmtpUserDTO();
+            mDTO.User.Username = configuration.GetValue<string>("MailUp:Username");
+            mDTO.User.Secret = configuration.GetValue<string>("MailUp:Secret");           
+            await EmailServices.SendEmailWithVariables(mDTO);
 
             return Ok();
         }
@@ -277,5 +286,5 @@ namespace events_api.Services
             worksheet.ApplyTableStyle();
             return workbook.ToBase64();
         }
-    }
+    }   
 }
