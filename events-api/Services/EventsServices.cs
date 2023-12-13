@@ -8,7 +8,6 @@ using events_api.Extensions;
 using ClosedXML.Excel;
 using System.Globalization;
 using MailUp.Sdk.Base;
-using EllipticCurve.Utils;
 
 namespace events_api.Services
 {
@@ -18,15 +17,13 @@ namespace events_api.Services
         private readonly IMapper mapper;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IConfiguration configuration;
-        private readonly IEmailServices emailServices;
-
+     
         public EventsServices(ApplicationDbContext context, IMapper mapper, IHttpClientFactory httpClientFactory, IConfiguration configuration, IEmailServices emailServices)
         {
             this.context = context;
             this.mapper = mapper;
             this.httpClientFactory = httpClientFactory;
-            this.configuration = configuration;
-            this.emailServices = emailServices;
+            this.configuration = configuration;           
         }
 
         public async Task<ActionResult> CreateEvent(EventCreationDTO dto)
@@ -218,10 +215,7 @@ namespace events_api.Services
             vars.Add(new NameValueDTO { N = "time_mex", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
             vars.Add(new NameValueDTO { N = "time_col", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
             mDTO.XSmtpAPI = new XSmtpAPIDTO();
-            mDTO.XSmtpAPI.DynamicFields = vars;
-            mDTO.User = new SmtpUserDTO();
-            mDTO.User.Username = configuration.GetValue<string>("MailUp:Username");
-            mDTO.User.Secret = configuration.GetValue<string>("MailUp:Secret");
+            mDTO.XSmtpAPI.DynamicFields = vars;            
             await EmailServices.SendEmailWithVariables(mDTO);            
             return Ok();
         }
@@ -245,10 +239,7 @@ namespace events_api.Services
             vars.Add(new NameValueDTO { N = "stream_url", V = $"<a href='{configuration.GetValue<string>("ClientUrl")}/events/{eventEntity.Slug}' class='es-button' target='_blank' style='mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;display:inline-block;background:#31CB4B;border-radius:30px;font-family:arial, \'helvetica neue\', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;padding:10px 20px 10px 20px;mso-padding-alt:0;mso-border-alt:10px solid #31CB4B'>Ver Transmisión</a>" });
             mDTO.XSmtpAPI = new XSmtpAPIDTO();
             mDTO.XSmtpAPI = new XSmtpAPIDTO();
-            mDTO.XSmtpAPI.DynamicFields = vars;
-            mDTO.User = new SmtpUserDTO();
-            mDTO.User.Username = configuration.GetValue<string>("MailUp:Username");
-            mDTO.User.Secret = configuration.GetValue<string>("MailUp:Secret");           
+            mDTO.XSmtpAPI.DynamicFields = vars;            
             await EmailServices.SendEmailWithVariables(mDTO);
 
             return Ok();

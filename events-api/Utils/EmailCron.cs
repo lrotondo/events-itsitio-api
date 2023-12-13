@@ -48,10 +48,7 @@ namespace events_api.Utils
                 vars.Add(new NameValueDTO { N = "time_mex", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
                 vars.Add(new NameValueDTO { N = "time_col", V = TimeZoneInfo.ConvertTime(eventEntity.DateUTC, TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time")).ToString("HH:mm") });
                 mDTO.XSmtpAPI = new XSmtpAPIDTO();
-                mDTO.XSmtpAPI.DynamicFields = vars;
-                mDTO.User = new SmtpUserDTO();
-                mDTO.User.Username = configuration.GetValue<string>("MailUp:Username");
-                mDTO.User.Secret = configuration.GetValue<string>("MailUp:Secret");
+                mDTO.XSmtpAPI.DynamicFields = vars;                
                 EmailServices.SendEmailWithVariables(mDTO);               
             });
 
