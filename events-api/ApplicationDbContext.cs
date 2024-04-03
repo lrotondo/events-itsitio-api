@@ -54,6 +54,8 @@ namespace events_api
         public DbSet<Speaker> Speakers { get; set; }
         public DbSet<Sponsor> Sponsors { get; set; }
         public DbSet<EventSpeaker> EventsSpeakers { get; set; }
+
+        public DbSet<EventModerator> EventsModerators { get; set; }
         public DbSet<EventSponsor> EventSponsors { get; set; }
         public DbSet<UserForEvent> UsersForEvents { get; set; }
     }

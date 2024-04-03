@@ -45,6 +45,8 @@ namespace events_api.Services
         public async Task<ActionResult<EventListResponseDTO>> GetAllEvents(EventsFilter filter)
         {
             var events = await context.Events
+                .Include(e => e.Moderators)
+                .ThenInclude(e => e.Moderator)
                 .Include(e => e.Speakers)
                 .ThenInclude(e => e.Speaker)
                 .Include(e => e.Sponsors)
@@ -78,6 +80,8 @@ namespace events_api.Services
         public async Task<ActionResult<EventDTO>> GetEvent(Guid id)
         {
             var eventEntity = await context.Events
+                .Include(e => e.Moderators)
+                .ThenInclude(e => e.Moderator)
                 .Include(e => e.Speakers)
                 .ThenInclude(e => e.Speaker)
                 .Include(e => e.Sponsors)
@@ -95,6 +99,8 @@ namespace events_api.Services
         public async Task<ActionResult<EventDTO>> GetEventBySlug(string slug)
         {
             var eventEntity = await context.Events
+                .Include(e => e.Moderators)
+                .ThenInclude(e => e.Moderator)
                 .Include(e => e.Speakers)
                 .ThenInclude(e => e.Speaker)
                 .Include(e => e.Sponsors)
@@ -130,6 +136,28 @@ namespace events_api.Services
             await context.AddAsync(rel);
 
             eventEntity.Speakers.Add(rel);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        public async Task<ActionResult> AddModeratorToEvent(Guid eventId, EventAddModeratorDTO dto)
+        {
+            var eventEntity = await context.Events.FindAsync(eventId);
+            if (eventEntity == null) return NotFound();
+
+            var moderator = new Moderator();
+            mapper.Map(dto, moderator);
+
+            var rel = new EventModerator()
+            {
+                Event = eventEntity,
+                Moderator = moderator
+            };
+
+            await context.AddAsync(moderator);
+            await context.AddAsync(rel);
+
+            eventEntity.Moderators.Add(rel);
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -178,6 +206,15 @@ namespace events_api.Services
             var speaker = await context.EventsSpeakers.FindAsync(id);
             if (speaker == null) return NotFound();
             context.Remove(speaker);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        public async Task<ActionResult> RemoveModeratorFromEvent(Guid id)
+        {
+            var moderator = await context.EventsModerators.FindAsync(id);
+            if (moderator == null) return NotFound();
+            context.Remove(moderator);
             await context.SaveChangesAsync();
             return Ok();
         }

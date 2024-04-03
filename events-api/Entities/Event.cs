@@ -12,6 +12,7 @@ namespace events_api.Entities
         public DateTime DateUTC { get; set; }
         public List<EventSpeaker> Speakers { get; set; }
         public List<EventSponsor> Sponsors { get; set; }
+        public List<EventModerator> Moderators { get; set; }
         public string Banner { get; set; }
         public List<UserForEvent> Users { get; set; } = new List<UserForEvent>();
         public string ArenaId { get; set; }

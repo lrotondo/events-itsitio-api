@@ -21,11 +21,15 @@ namespace events_api.Utils
 
             CreateMap<Speaker, SpeakerDTO>();
             CreateMap<Sponsor, SponsorDTO>();
+            CreateMap<Moderator, ModeratorDTO>();
 
             CreateMap<EventSpeaker, EventSpeakerDTO>();
             CreateMap<EventSponsor, EventSponsorDTO>();
+            CreateMap<EventModerator, EventModeratorDTO>();
+
             CreateMap<EventAddSpeakerDTO, Speaker>();
             CreateMap<EventAddSponsorDTO, Sponsor>();
+            CreateMap<EventAddModeratorDTO, Moderator>();
 
             CreateMap<RegisterUserToEventDTO, UserForEvent>();
             CreateMap<UserForEvent, UserForEventDTO>();

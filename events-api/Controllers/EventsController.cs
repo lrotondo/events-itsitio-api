@@ -56,6 +56,12 @@ namespace events_api.Controllers
             return await eventsServices.AddSponsorToEvent(id, dto);
         }
 
+        [HttpPost("{id}/moderators")]
+        public async Task<ActionResult> AddModeratorToEvent([FromRoute] Guid id, [FromBody] EventAddModeratorDTO dto)
+        {
+            return await eventsServices.AddModeratorToEvent(id, dto);
+        }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteEvent([FromRoute] Guid id)
         {
@@ -78,6 +84,12 @@ namespace events_api.Controllers
         public async Task<ActionResult> RemoveSponsorFromEvent([FromRoute] Guid id)
         {
             return await eventsServices.RemoveSponsorFromEvent(id);
+        }
+
+        [HttpDelete("moderators/{id}")]
+        public async Task<ActionResult> RemoveModeratorsFromEvent([FromRoute] Guid id)
+        {
+            return await eventsServices.RemoveModeratorFromEvent(id);
         }
 
         [HttpPost("{eventId}/register")]
